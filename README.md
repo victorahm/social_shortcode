@@ -15,7 +15,7 @@ responsive embed in the frontend. No copy/paste of raw iframe HTML, no broken ma
 | Shortcode | Status | Description |
 |-----------|--------|-------------|
 | `[youtube]` | ✅ Available | Embeds a YouTube video (full URL, `youtu.be` link or video ID). |
-| `[instagram]` | 🔜 Planned | Embeds an Instagram post. |
+| `[instagram]` | ✅ Available | Embeds an Instagram post, reel or video. |
 | `[x]` | 🔜 Planned | Embeds an X (Twitter) post/tweet. |
 | `[tiktok]` | 🔜 Planned | Embeds a TikTok video. |
 | `[facebook]` | 🔜 Planned | Embeds a Facebook post or reel. |
@@ -40,12 +40,25 @@ when requested).
 | `fullwidth` | `false` | When `true`, wraps the embed in a responsive 16:9 container (`aspect-ratio`, 100% width). |
 | `autoplay` | `false` | When `true`, adds `autoplay=1` to the embed URL. |
 
+### Instagram
+
+```
+[instagram url="https://www.instagram.com/p/C8XYZabc123/"]
+[instagram url="https://www.instagram.com/reel/C8XYZabc123/"]
+```
+
+The post renders with Instagram's official embed (blockquote + `embed.js`). Posts,
+reels and IGTV videos (`/p/`, `/reel/`, `/tv/` URLs) are supported.
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `url` | — | **Required.** Instagram post, reel or TV URL. Any other URL falls back to a plain link. |
+
 ### Coming soon
 
 These shortcodes are planned and tracked as issues:
 
 ```
-[instagram url="https://www.instagram.com/p/XXXXXXXXXXX/"]
 [x url="https://x.com/user/status/1234567890"]
 [tiktok url="https://www.tiktok.com/@user/video/1234567890"]
 [facebook url="https://www.facebook.com/user/posts/1234567890"]
@@ -148,7 +161,7 @@ See [AGENTS.md](AGENTS.md) for guidance aimed at AI agents working on this codeb
 Track progress and report problems in the project's issue tracker:
 https://redmine.obsidianasystems.com/projects/social-shortcodes
 
-- Add Instagram, X (Twitter), TikTok and Facebook shortcodes
+- Add X (Twitter), TikTok and Facebook shortcodes
 
 ## Contributing
 

@@ -29,6 +29,7 @@ module Plugins::SocialShortcode::MainHelper
 
   def create_social_shortcodes
     register_youtube_shortcode
+    register_instagram_shortcode
   end
 
   private
@@ -64,6 +65,28 @@ module Plugins::SocialShortcode::MainHelper
                    "Insert youtube video"
   end
 
+  def register_instagram_shortcode
+    shortcode_add "instagram",
+                   lambda{ |attrs, args|
+                     url = attrs['url'].to_s.strip
+                     unless instagram_media_url?(url)
+                       return args[:shortcode].to_s if url.blank? || !url.match?(%r{\Ahttps?://}i)
+                       safe_url = ERB::Util.html_escape(url)
+                       return "<a href='#{safe_url}'>#{safe_url}</a>"
+                     end
+
+                     safe_url = ERB::Util.html_escape(url)
+                     "<blockquote class='instagram-media' data-instgrm-permalink='#{safe_url}' " \
+                     "data-instgrm-version='14' " \
+                     "style='background:#FFF;border:0;border-radius:3px;" \
+                     "box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);" \
+                     "margin:1px;max-width:540px;min-width:326px;padding:0;width:99.375%'>" \
+                     "<a href='#{safe_url}'>View this post on Instagram</a></blockquote>" \
+                     "<script async src='https://www.instagram.com/embed.js' charset='utf-8'></script>"
+                    },
+                   "Insert instagram post"
+  end
+
   def youtube_video_id(value)
     raw = value.to_s.strip
 
@@ -77,5 +100,9 @@ module Plugins::SocialShortcode::MainHelper
     end
 
     raw.match?(/\A[A-Za-z0-9_-]{11}\z/) ? raw : nil
+  end
+
+  def instagram_media_url?(value)
+    value.match?(%r{\A(?:https?:)?//?(?:www\.)?instagram\.com/(?:p|reel|tv)/[A-Za-z0-9_-]+(?:[/?#].*)?\z}i)
   end
 end
