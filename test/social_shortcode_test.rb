@@ -31,6 +31,53 @@ class SocialShortcodeTest < ActiveSupport::TestCase
     assert_includes CamaleonCms::ShortcodeRegistry.names, 'youtube'
   end
 
+  test 'engine declares the instagram shortcode to the boot-time ShortcodeRegistry' do
+    assert_includes CamaleonCms::ShortcodeRegistry.names, 'instagram'
+  end
+
+  test 'renders an instagram blockquote embed for a post url' do
+    html = render('[instagram url="https://www.instagram.com/p/C8XYZabc123/"]')
+
+    assert_includes html, "class='instagram-media'"
+    assert_includes html, "data-instgrm-permalink='https://www.instagram.com/p/C8XYZabc123/'"
+    assert_includes html, 'https://www.instagram.com/embed.js'
+    assert_includes html, 'View this post on Instagram'
+  end
+
+  test 'renders an instagram blockquote embed for a reel url' do
+    html = render('[instagram url="https://www.instagram.com/reel/C8XYZabc123/"]')
+
+    assert_includes html, "class='instagram-media'"
+    assert_includes html, "data-instgrm-permalink='https://www.instagram.com/reel/C8XYZabc123/'"
+  end
+
+  test 'renders an instagram blockquote embed for a tv url' do
+    html = render('[instagram url="https://instagram.com/tv/C8XYZabc123"]')
+
+    assert_includes html, "data-instgrm-permalink='https://instagram.com/tv/C8XYZabc123'"
+  end
+
+  test 'non instagram http url falls back to a plain link without raising' do
+    html = render('[instagram url="https://example.com/not-instagram"]')
+
+    assert_equal "<a href='https://example.com/not-instagram'>https://example.com/not-instagram</a>", html
+  end
+
+  test 'instagram url without a media path falls back to a plain link' do
+    html = render('[instagram url="https://www.instagram.com/some_user/"]')
+
+    assert_equal "<a href='https://www.instagram.com/some_user/'>https://www.instagram.com/some_user/</a>", html
+  end
+
+  test 'non http instagram url falls back to the original shortcode without raising' do
+    assert_equal '[instagram url="javascript:alert(1)"]',
+                 render('[instagram url="javascript:alert(1)"]')
+  end
+
+  test 'missing instagram url attribute keeps the original shortcode without raising' do
+    assert_equal '[instagram]', render('[instagram]')
+  end
+
   test 'renders an iframe for a full youtube watch url' do
     html = render('[youtube video="https://www.youtube.com/watch?v=dQw4w9WgXcQ"]')
 
