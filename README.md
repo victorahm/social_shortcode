@@ -25,13 +25,19 @@ responsive embed in the frontend. No copy/paste of raw iframe HTML, no broken ma
 ```
 [youtube video="https://www.youtube.com/watch?v=dQw4w9WgXcQ"]
 [youtube video="https://youtu.be/dQw4w9WgXcQ" fullwidth="true"]
+[youtube video="https://www.youtube.com/shorts/dQw4w9WgXcQ"]
 [youtube video="dQw4w9WgXcQ" autoplay="true"]
 ```
 
+The video renders in YouTube's current
+[`https://www.youtube.com/embed/VIDEO_ID`](https://developers.google.com/youtube/player_parameters)
+player format with the `rel=0` and `playsinline=1` parameters (and `autoplay=1`
+when requested).
+
 | Attribute | Default | Description |
 |-----------|---------|-------------|
-| `video` | — | **Required.** Full YouTube URL, `youtu.be` URL or bare video ID. |
-| `fullwidth` | `false` | When `true`, wraps the embed in a responsive 16:9 container. |
+| `video` | — | **Required.** Full YouTube URL (`watch`, `shorts`, `embed`), `youtu.be` URL or bare 11-character video ID. |
+| `fullwidth` | `false` | When `true`, wraps the embed in a responsive 16:9 container (`aspect-ratio`, 100% width). |
 | `autoplay` | `false` | When `true`, adds `autoplay=1` to the embed URL. |
 
 ### Coming soon
@@ -142,7 +148,6 @@ See [AGENTS.md](AGENTS.md) for guidance aimed at AI agents working on this codeb
 Track progress and report problems in the project's issue tracker:
 https://redmine.obsidianasystems.com/projects/social-shortcodes
 
-- Update the YouTube shortcode to follow YouTube's current embed documentation
 - Add Instagram, X (Twitter), TikTok and Facebook shortcodes
 
 ## Contributing

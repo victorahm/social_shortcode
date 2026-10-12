@@ -109,9 +109,6 @@ pattern already used for `fullwidth`/`autoplay`.
   comments; they are not tolerated by the current CamaleonCMS release.)
 - `config/routes.rb` contains the same `Rails.application.routes.draw` block twice.
   Removing the duplicate is fine, but do it as its own commit/PR with a note.
-- In the YouTube lambda, `md[1||2]` evaluates to `md[1]`, so `youtu.be` URLs do not
-  resolve the video ID. Any fix here belongs with the "Update the YouTube shortcode"
-  issue and needs a test.
 
 ## Commands
 

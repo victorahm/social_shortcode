@@ -28,29 +28,54 @@ module Plugins::SocialShortcode::MainHelper
   end
 
   def create_social_shortcodes
+    register_youtube_shortcode
+  end
+
+  private
+
+  def register_youtube_shortcode
     shortcode_add "youtube",
                    lambda{ |attrs, args|
-                     video = attrs['video']
-                     regexp = Regexp.new('^(?:https?:\/\/)?(?:www\.)?youtube.com\/watch\?v=([a-zA-Z0-9_-]+)|youtu\.be\/([a-zA-Z0-9_-]+)')
-                     md = regexp.match video.to_s
-                     if md.nil?
-                       url = video.to_s.strip
+                     video_id = youtube_video_id(attrs['video'])
+                     if video_id.nil?
+                       url = attrs['video'].to_s.strip
                        return args[:shortcode].to_s if url.blank? || !url.match?(%r{\Ahttps?://}i)
                        safe_url = ERB::Util.html_escape(url)
                        return "<a href='#{safe_url}'>#{safe_url}</a>"
                      end
-                     attributes = ''
-                     attributes += "?autoplay=1" if attrs.keys.include?('autoplay') && ActiveModel::Type::Boolean.new.cast(attrs['autoplay'])
 
-                     frame = "<iframe width='560' height='315' src='https://www.youtube.com/embed/#{md[1||2]}#{attributes}' frameborder='0' allowfullscreen></iframe>"
-                     if attrs.keys.include? 'fullwidth'
-                       fw = ActiveModel::Type::Boolean.new.cast attrs['fullwidth']
-                       if fw
-                         frame = "<div class='embed-responsive embed-responsive-16by9'>#{frame}</div>"
-                       end
+                     query = 'rel=0&amp;playsinline=1'
+                     query += '&amp;autoplay=1' if ActiveModel::Type::Boolean.new.cast(attrs['autoplay'])
+                     src = "https://www.youtube.com/embed/#{video_id}?#{query}"
+
+                     fullwidth = ActiveModel::Type::Boolean.new.cast(attrs['fullwidth'])
+                     fill = fullwidth ? " style='position:absolute;top:0;left:0;width:100%;height:100%;border:0'" : ''
+                     frame = "<iframe width='560' height='315' src='#{src}' title='YouTube video player' " \
+                             "frameborder='0' loading='lazy' " \
+                             "allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' " \
+                             "referrerpolicy='strict-origin-when-cross-origin' allowfullscreen#{fill}></iframe>"
+
+                     if fullwidth
+                       frame = "<div class='embed-responsive embed-responsive-16by9' " \
+                               "style='position:relative;width:100%;aspect-ratio:16/9;overflow:hidden'>#{frame}</div>"
                      end
                      frame
                     },
                    "Insert youtube video"
+  end
+
+  def youtube_video_id(value)
+    raw = value.to_s.strip
+
+    patterns = [
+      %r{\A(?:https?:)?//?(?:www\.|m\.)?youtube\.com/(?:watch\?(?:[^#]*&)?v=|embed/|shorts/|live/|v/)(?<id>[A-Za-z0-9_-]{11})(?:[&#?/].*)?\z}i,
+      %r{\A(?:https?:)?//?(?:www\.)?youtu\.be/(?<id>[A-Za-z0-9_-]{11})(?:[?&#].*)?\z}i
+    ]
+    patterns.each do |pattern|
+      md = pattern.match(raw)
+      return md[:id] if md
+    end
+
+    raw.match?(/\A[A-Za-z0-9_-]{11}\z/) ? raw : nil
   end
 end

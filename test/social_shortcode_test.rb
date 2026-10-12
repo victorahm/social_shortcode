@@ -34,33 +34,75 @@ class SocialShortcodeTest < ActiveSupport::TestCase
   test 'renders an iframe for a full youtube watch url' do
     html = render('[youtube video="https://www.youtube.com/watch?v=dQw4w9WgXcQ"]')
 
-    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ'"
+    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&amp;playsinline=1'"
     assert_includes html, 'allowfullscreen'
+    assert_includes html, "title='YouTube video player'"
   end
 
   test 'renders an iframe for a watch url without www' do
     html = render('[youtube video="https://youtube.com/watch?v=dQw4w9WgXcQ"]')
 
-    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ'"
+    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&amp;playsinline=1'"
+  end
+
+  test 'renders an iframe for a youtu.be short url' do
+    html = render('[youtube video="https://youtu.be/dQw4w9WgXcQ"]')
+
+    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&amp;playsinline=1'"
+  end
+
+  test 'renders an iframe for a youtu.be short url with query params' do
+    html = render('[youtube video="https://youtu.be/dQw4w9WgXcQ?t=42"]')
+
+    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&amp;playsinline=1'"
+  end
+
+  test 'renders an iframe for a bare video id' do
+    html = render('[youtube video="dQw4w9WgXcQ"]')
+
+    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&amp;playsinline=1'"
+  end
+
+  test 'renders an iframe for a shorts url' do
+    html = render('[youtube video="https://www.youtube.com/shorts/dQw4w9WgXcQ"]')
+
+    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&amp;playsinline=1'"
+  end
+
+  test 'renders an iframe for a watch url with extra params' do
+    html = render('[youtube video="https://www.youtube.com/watch?feature=share&v=dQw4w9WgXcQ&list=PL123"]')
+
+    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&amp;playsinline=1'"
+  end
+
+  test 'embed url carries the current documentation parameters' do
+    html = render('[youtube video="https://www.youtube.com/watch?v=dQw4w9WgXcQ"]')
+
+    assert_includes html, 'rel=0'
+    assert_includes html, 'playsinline=1'
+    assert_includes html, 'loading=\'lazy\''
   end
 
   test 'autoplay adds the autoplay query param' do
     html = render('[youtube video="https://www.youtube.com/watch?v=dQw4w9WgXcQ" autoplay="true"]')
 
-    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1'"
+    assert_includes html,
+                    "src='https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&amp;playsinline=1&amp;autoplay=1'"
   end
 
   test 'autoplay false does not add the autoplay query param' do
     html = render('[youtube video="https://www.youtube.com/watch?v=dQw4w9WgXcQ" autoplay="false"]')
 
-    refute_includes html, 'autoplay'
+    refute_includes html, 'autoplay=1'
   end
 
   test 'fullwidth wraps the iframe in a responsive container' do
     html = render('[youtube video="https://www.youtube.com/watch?v=dQw4w9WgXcQ" fullwidth="true"]')
 
     assert_includes html, "class='embed-responsive embed-responsive-16by9'"
-    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ'"
+    assert_includes html, 'aspect-ratio:16/9'
+    assert_includes html, 'width:100%'
+    assert_includes html, "src='https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&amp;playsinline=1'"
   end
 
   test 'unparseable http url falls back to a plain link without raising' do
