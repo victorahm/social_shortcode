@@ -35,6 +35,55 @@ class SocialShortcodeTest < ActiveSupport::TestCase
     assert_includes CamaleonCms::ShortcodeRegistry.names, 'instagram'
   end
 
+  test 'engine declares the x shortcode to the boot-time ShortcodeRegistry' do
+    assert_includes CamaleonCms::ShortcodeRegistry.names, 'x'
+  end
+
+  test 'renders an x blockquote embed for an x.com status url' do
+    html = render('[x url="https://x.com/jack/status/20"]')
+
+    assert_includes html, "class='twitter-tweet'"
+    assert_includes html, "<a href='https://x.com/jack/status/20'>"
+    assert_includes html, 'https://platform.twitter.com/widgets.js'
+    assert_includes html, "data-theme='light'"
+  end
+
+  test 'renders an x blockquote embed for a twitter.com status url' do
+    html = render('[x url="https://twitter.com/jack/status/20?s=20"]')
+
+    assert_includes html, "class='twitter-tweet'"
+    assert_includes html, "<a href='https://twitter.com/jack/status/20?s=20'>"
+    assert_includes html, 'https://platform.twitter.com/widgets.js'
+  end
+
+  test 'x theme dark sets the blockquote data-theme' do
+    html = render('[x url="https://x.com/jack/status/20" theme="dark"]')
+
+    assert_includes html, "data-theme='dark'"
+    refute_includes html, "data-theme='light'"
+  end
+
+  test 'non x http url falls back to a plain link without raising' do
+    html = render('[x url="https://example.com/not-a-tweet"]')
+
+    assert_equal "<a href='https://example.com/not-a-tweet'>https://example.com/not-a-tweet</a>", html
+  end
+
+  test 'x profile url without a status id falls back to a plain link' do
+    html = render('[x url="https://x.com/jack"]')
+
+    assert_equal "<a href='https://x.com/jack'>https://x.com/jack</a>", html
+  end
+
+  test 'non http x url falls back to the original shortcode without raising' do
+    assert_equal '[x url="javascript:alert(1)"]',
+                 render('[x url="javascript:alert(1)"]')
+  end
+
+  test 'missing x url attribute keeps the original shortcode without raising' do
+    assert_equal '[x]', render('[x]')
+  end
+
   test 'renders an instagram blockquote embed for a post url' do
     html = render('[instagram url="https://www.instagram.com/p/C8XYZabc123/"]')
 

@@ -16,7 +16,7 @@ responsive embed in the frontend. No copy/paste of raw iframe HTML, no broken ma
 |-----------|--------|-------------|
 | `[youtube]` | ✅ Available | Embeds a YouTube video (full URL, `youtu.be` link or video ID). |
 | `[instagram]` | ✅ Available | Embeds an Instagram post, reel or video. |
-| `[x]` | 🔜 Planned | Embeds an X (Twitter) post/tweet. |
+| `[x]` | ✅ Available | Embeds an X (Twitter) post/tweet. |
 | `[tiktok]` | 🔜 Planned | Embeds a TikTok video. |
 | `[facebook]` | 🔜 Planned | Embeds a Facebook post or reel. |
 
@@ -54,12 +54,26 @@ reels and IGTV videos (`/p/`, `/reel/`, `/tv/` URLs) are supported.
 |-----------|---------|-------------|
 | `url` | — | **Required.** Instagram post, reel or TV URL. Any other URL falls back to a plain link. |
 
+### X (Twitter)
+
+```
+[x url="https://x.com/jack/status/20"]
+[x url="https://twitter.com/jack/status/20" theme="dark"]
+```
+
+The tweet renders with X's official embed (blockquote `twitter-tweet` +
+`widgets.js`). Both `x.com` and `twitter.com` status URLs are accepted.
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `url` | — | **Required.** X/Twitter status URL (`…/user/status/123456`). Any other URL falls back to a plain link. |
+| `theme` | `light` | Set to `dark` to render the embed with the dark theme. |
+
 ### Coming soon
 
 These shortcodes are planned and tracked as issues:
 
 ```
-[x url="https://x.com/user/status/1234567890"]
 [tiktok url="https://www.tiktok.com/@user/video/1234567890"]
 [facebook url="https://www.facebook.com/user/posts/1234567890"]
 ```
@@ -161,7 +175,7 @@ See [AGENTS.md](AGENTS.md) for guidance aimed at AI agents working on this codeb
 Track progress and report problems in the project's issue tracker:
 https://redmine.obsidianasystems.com/projects/social-shortcodes
 
-- Add X (Twitter), TikTok and Facebook shortcodes
+- Add TikTok and Facebook shortcodes
 
 ## Contributing
 
