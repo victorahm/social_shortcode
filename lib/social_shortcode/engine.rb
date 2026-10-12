@@ -9,6 +9,7 @@ module SocialShortcode
       CamaleonCms::ShortcodeRegistry.register("instagram")
       CamaleonCms::ShortcodeRegistry.register("x")
       CamaleonCms::ShortcodeRegistry.register("tiktok")
+      CamaleonCms::ShortcodeRegistry.register("facebook")
     end
   end
 end

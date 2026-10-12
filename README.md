@@ -18,7 +18,7 @@ responsive embed in the frontend. No copy/paste of raw iframe HTML, no broken ma
 | `[instagram]` | ✅ Available | Embeds an Instagram post, reel or video. |
 | `[x]` | ✅ Available | Embeds an X (Twitter) post/tweet. |
 | `[tiktok]` | ✅ Available | Embeds a TikTok video. |
-| `[facebook]` | 🔜 Planned | Embeds a Facebook post or reel. |
+| `[facebook]` | ✅ Available | Embeds a Facebook post or reel. |
 
 ### YouTube
 
@@ -85,13 +85,22 @@ link.
 |-----------|---------|-------------|
 | `url` | — | **Required.** TikTok video URL (`…/@user/video/123456`). Any other URL falls back to a plain link. |
 
-### Coming soon
-
-This shortcode is planned and tracked as an issue:
+### Facebook
 
 ```
-[facebook url="https://www.facebook.com/user/posts/1234567890"]
+[facebook url="https://www.facebook.com/some_page/posts/1234567890"]
+[facebook url="https://www.facebook.com/reel/1234567890"]
+[facebook url="https://www.facebook.com/permalink.php?story_fbid=1234567890&id=999"]
 ```
+
+Posts render with the official `plugins/post.php` embed iframe; reels and
+videos (`/reel/`, `/videos/`, `/watch/` URLs) render with `plugins/video.php`
+(reels use a 9:16 portrait frame, videos 16:9). Profile/page URLs without a
+post fall back to a plain link.
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `url` | — | **Required.** Facebook post, reel, video or permalink URL. Any other URL falls back to a plain link. |
 
 ## Requirements
 
@@ -189,8 +198,6 @@ See [AGENTS.md](AGENTS.md) for guidance aimed at AI agents working on this codeb
 
 Track progress and report problems in the project's issue tracker:
 https://redmine.obsidianasystems.com/projects/social-shortcodes
-
-- Add the Facebook shortcode
 
 ## Contributing
 
