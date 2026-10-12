@@ -31,6 +31,7 @@ module Plugins::SocialShortcode::MainHelper
     register_youtube_shortcode
     register_instagram_shortcode
     register_x_shortcode
+    register_tiktok_shortcode
   end
 
   private
@@ -107,6 +108,26 @@ module Plugins::SocialShortcode::MainHelper
                    "Insert X (Twitter) post"
   end
 
+  def register_tiktok_shortcode
+    shortcode_add "tiktok",
+                   lambda{ |attrs, args|
+                     url = attrs['url'].to_s.strip
+                     video_id = tiktok_video_id(url)
+                     if video_id.nil?
+                       return args[:shortcode].to_s if url.blank? || !url.match?(%r{\Ahttps?://}i)
+                       safe_url = ERB::Util.html_escape(url)
+                       return "<a href='#{safe_url}'>#{safe_url}</a>"
+                     end
+
+                     safe_url = ERB::Util.html_escape(url)
+                     "<blockquote class='tiktok-embed' cite='#{safe_url}' data-video-id='#{video_id}' " \
+                     "data-embed-from='oembed' style='max-width:605px;min-width:325px'>" \
+                     "<section><a href='#{safe_url}'>Watch this video on TikTok</a></section></blockquote>" \
+                     "<script async src='https://www.tiktok.com/embed.js'></script>"
+                    },
+                   "Insert TikTok video"
+  end
+
   def youtube_video_id(value)
     raw = value.to_s.strip
 
@@ -128,5 +149,10 @@ module Plugins::SocialShortcode::MainHelper
 
   def x_status_url?(value)
     value.match?(%r{\A(?:https?:)?//?(?:www\.|mobile\.)?(?:x|twitter)\.com/[^/]+/status/\d+(?:\?.*)?\z}i)
+  end
+
+  def tiktok_video_id(value)
+    md = value.match(%r{\A(?:https?:)?//?(?:www\.|m\.)?tiktok\.com/@[^/]+/video/(?<id>\d+)(?:[/?#].*)?\z}i)
+    md && md[:id]
   end
 end

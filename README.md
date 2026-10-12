@@ -17,7 +17,7 @@ responsive embed in the frontend. No copy/paste of raw iframe HTML, no broken ma
 | `[youtube]` | ✅ Available | Embeds a YouTube video (full URL, `youtu.be` link or video ID). |
 | `[instagram]` | ✅ Available | Embeds an Instagram post, reel or video. |
 | `[x]` | ✅ Available | Embeds an X (Twitter) post/tweet. |
-| `[tiktok]` | 🔜 Planned | Embeds a TikTok video. |
+| `[tiktok]` | ✅ Available | Embeds a TikTok video. |
 | `[facebook]` | 🔜 Planned | Embeds a Facebook post or reel. |
 
 ### YouTube
@@ -69,12 +69,27 @@ The tweet renders with X's official embed (blockquote `twitter-tweet` +
 | `url` | — | **Required.** X/Twitter status URL (`…/user/status/123456`). Any other URL falls back to a plain link. |
 | `theme` | `light` | Set to `dark` to render the embed with the dark theme. |
 
-### Coming soon
-
-These shortcodes are planned and tracked as issues:
+### TikTok
 
 ```
-[tiktok url="https://www.tiktok.com/@user/video/1234567890"]
+[tiktok url="https://www.tiktok.com/@scout2015/video/6718335390845095173"]
+```
+
+The video renders with the official TikTok embed markup (blockquote
+`tiktok-embed` + `embed.js`) — the same HTML TikTok's oEmbed endpoint returns,
+emitted directly so no network request happens at render time. Short links
+(`vm.tiktok.com/…`) cannot be resolved server-side and fall back to a plain
+link.
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `url` | — | **Required.** TikTok video URL (`…/@user/video/123456`). Any other URL falls back to a plain link. |
+
+### Coming soon
+
+This shortcode is planned and tracked as an issue:
+
+```
 [facebook url="https://www.facebook.com/user/posts/1234567890"]
 ```
 
@@ -175,7 +190,7 @@ See [AGENTS.md](AGENTS.md) for guidance aimed at AI agents working on this codeb
 Track progress and report problems in the project's issue tracker:
 https://redmine.obsidianasystems.com/projects/social-shortcodes
 
-- Add TikTok and Facebook shortcodes
+- Add the Facebook shortcode
 
 ## Contributing
 

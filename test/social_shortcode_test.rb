@@ -39,6 +39,47 @@ class SocialShortcodeTest < ActiveSupport::TestCase
     assert_includes CamaleonCms::ShortcodeRegistry.names, 'x'
   end
 
+  test 'engine declares the tiktok shortcode to the boot-time ShortcodeRegistry' do
+    assert_includes CamaleonCms::ShortcodeRegistry.names, 'tiktok'
+  end
+
+  test 'renders a tiktok blockquote embed for a video url' do
+    html = render('[tiktok url="https://www.tiktok.com/@scout2015/video/6718335390845095173"]')
+
+    assert_includes html, "class='tiktok-embed'"
+    assert_includes html, "data-video-id='6718335390845095173'"
+    assert_includes html, "cite='https://www.tiktok.com/@scout2015/video/6718335390845095173'"
+    assert_includes html, 'https://www.tiktok.com/embed.js'
+    assert_includes html, '<a href='
+  end
+
+  test 'renders a tiktok blockquote embed for a video url without www' do
+    html = render('[tiktok url="https://tiktok.com/@scout2015/video/6718335390845095173"]')
+
+    assert_includes html, "data-video-id='6718335390845095173'"
+  end
+
+  test 'non tiktok http url falls back to a plain link without raising' do
+    html = render('[tiktok url="https://example.com/not-tiktok"]')
+
+    assert_equal "<a href='https://example.com/not-tiktok'>https://example.com/not-tiktok</a>", html
+  end
+
+  test 'unresolvable tiktok short link falls back to a plain link without raising' do
+    html = render('[tiktok url="https://vm.tiktok.com/ZMabcdef/"]')
+
+    assert_equal "<a href='https://vm.tiktok.com/ZMabcdef/'>https://vm.tiktok.com/ZMabcdef/</a>", html
+  end
+
+  test 'non http tiktok url falls back to the original shortcode without raising' do
+    assert_equal '[tiktok url="javascript:alert(1)"]',
+                 render('[tiktok url="javascript:alert(1)"]')
+  end
+
+  test 'missing tiktok url attribute keeps the original shortcode without raising' do
+    assert_equal '[tiktok]', render('[tiktok]')
+  end
+
   test 'renders an x blockquote embed for an x.com status url' do
     html = render('[x url="https://x.com/jack/status/20"]')
 
