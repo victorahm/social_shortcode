@@ -32,7 +32,13 @@ module Plugins::SocialShortcode::MainHelper
                    lambda{ |attrs, args|
                      video = attrs['video']
                      regexp = Regexp.new('^(?:https?:\/\/)?(?:www\.)?youtube.com\/watch\?v=([a-zA-Z0-9_-]+)|youtu\.be\/([a-zA-Z0-9_-]+)')
-                     md=regexp.match video
+                     md = regexp.match video.to_s
+                     if md.nil?
+                       url = video.to_s.strip
+                       return args[:shortcode].to_s if url.blank? || !url.match?(%r{\Ahttps?://}i)
+                       safe_url = ERB::Util.html_escape(url)
+                       return "<a href='#{safe_url}'>#{safe_url}</a>"
+                     end
                      attributes = ''
                      attributes += "?autoplay=1" if attrs.keys.include?('autoplay') && ActiveModel::Type::Boolean.new.cast(attrs['autoplay'])
 

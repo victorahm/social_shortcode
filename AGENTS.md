@@ -6,7 +6,7 @@ plugin.
 ## What this project is
 
 A [CamaleonCMS](https://github.com/owen2345/camaleon-cms) plugin (Rails engine) that
-registers shortcodes — `{youtube}`, `{instagram}`, `{x}`, `{tiktok}`, `{facebook}` —
+registers shortcodes — `[youtube]`, `[instagram]`, `[x]`, `[tiktok]`, `[facebook]` —
 so users can embed social network multimedia content inside Camaleon pages/posts.
 
 - Repo: https://github.com/victorahm/social_shortcode
@@ -69,13 +69,18 @@ Gemfile / Rakefile
                  "Insert youtube video"
    ```
 
-3. The lambda returns the HTML string that replaces `{shortcode attr="value"}` in the
+3. The lambda returns the HTML string that replaces `[shortcode attr="value"]` in the
    rendered content.
+4. `lib/social_shortcode/engine.rb` also declares the shortcode names to CamaleonCMS'
+   boot-time `CamaleonCms::ShortcodeRegistry` (added in CamaleonCMS 2.9.4), so the
+   CMS' save-time content gate recognizes them without a frontend request. Any new
+   shortcode must be registered in **both** places.
 
 **To add a new shortcode**, add another `shortcode_add` call inside
-`create_social_shortcodes` (one function per network keeps it readable) and document it
-in `README.md`. Use `ActiveModel::Type::Boolean.new.cast(...)` for boolean attributes —
-that is the pattern already used for `fullwidth`/`autoplay`.
+`create_social_shortcodes` (one function per network keeps it readable), declare its
+name in the engine's `ShortcodeRegistry` initializer, and document it in `README.md`.
+Use `ActiveModel::Type::Boolean.new.cast(...)` for boolean attributes — that is the
+pattern already used for `fullwidth`/`autoplay`.
 
 ### Conventions for shortcode lambdas
 
@@ -98,8 +103,10 @@ that is the pattern already used for `fullwidth`/`autoplay`.
 
 ## Known quirks (do not "fix" silently)
 
-- `config/camaleon_plugin.json` uses `//` comments (not strict JSON) — CamaleonCMS
-  tolerates them; keep them if you edit the file, and mention any change in the PR.
+- `config/camaleon_plugin.json` must stay **strict JSON** (no `//` comments):
+  CamaleonCMS 2.9.4 parses gem-plugin manifests with a plain `JSON.parse`, which
+  rejects comments on the `json` 3.x line. (Older revisions of this plugin shipped
+  comments; they are not tolerated by the current CamaleonCMS release.)
 - `config/routes.rb` contains the same `Rails.application.routes.draw` block twice.
   Removing the duplicate is fine, but do it as its own commit/PR with a note.
 - In the YouTube lambda, `md[1||2]` evaluates to `md[1]`, so `youtu.be` URLs do not

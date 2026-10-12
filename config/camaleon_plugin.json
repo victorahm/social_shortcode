@@ -1,7 +1,7 @@
 {
   "title": "Social Shortcodes",
   "descr": "",
-  "key": "social_shortcode", // must be the name of the folder of your plugin, sample: app/views/plugins/<my_plugin> ==> 'my_plugin'
+  "key": "social_shortcode",
   "helpers": [
     "Plugins::SocialShortcode::MainHelper"
   ],
@@ -10,6 +10,5 @@
     "on_inactive": ["social_shortcode_on_inactive"],
     "plugin_options": ["social_shortcode_on_plugin_options"],
     "app_before_load": ["create_social_shortcodes"]
-    //here you can add all your hooks (read documentation)
   }
 }

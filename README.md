@@ -14,18 +14,18 @@ responsive embed in the frontend. No copy/paste of raw iframe HTML, no broken ma
 
 | Shortcode | Status | Description |
 |-----------|--------|-------------|
-| `{youtube}` | ✅ Available | Embeds a YouTube video (full URL, `youtu.be` link or video ID). |
-| `{instagram}` | 🔜 Planned | Embeds an Instagram post. |
-| `{x}` | 🔜 Planned | Embeds an X (Twitter) post/tweet. |
-| `{tiktok}` | 🔜 Planned | Embeds a TikTok video. |
-| `{facebook}` | 🔜 Planned | Embeds a Facebook post or reel. |
+| `[youtube]` | ✅ Available | Embeds a YouTube video (full URL, `youtu.be` link or video ID). |
+| `[instagram]` | 🔜 Planned | Embeds an Instagram post. |
+| `[x]` | 🔜 Planned | Embeds an X (Twitter) post/tweet. |
+| `[tiktok]` | 🔜 Planned | Embeds a TikTok video. |
+| `[facebook]` | 🔜 Planned | Embeds a Facebook post or reel. |
 
 ### YouTube
 
 ```
-{youtube video="https://www.youtube.com/watch?v=dQw4w9WgXcQ"}
-{youtube video="https://youtu.be/dQw4w9WgXcQ" fullwidth="true"}
-{youtube video="dQw4w9WgXcQ" autoplay="true"}
+[youtube video="https://www.youtube.com/watch?v=dQw4w9WgXcQ"]
+[youtube video="https://youtu.be/dQw4w9WgXcQ" fullwidth="true"]
+[youtube video="dQw4w9WgXcQ" autoplay="true"]
 ```
 
 | Attribute | Default | Description |
@@ -39,16 +39,32 @@ responsive embed in the frontend. No copy/paste of raw iframe HTML, no broken ma
 These shortcodes are planned and tracked as issues:
 
 ```
-{instagram url="https://www.instagram.com/p/XXXXXXXXXXX/"}
-{x url="https://x.com/user/status/1234567890"}
-{tiktok url="https://www.tiktok.com/@user/video/1234567890"}
-{facebook url="https://www.facebook.com/user/posts/1234567890"}
+[instagram url="https://www.instagram.com/p/XXXXXXXXXXX/"]
+[x url="https://x.com/user/status/1234567890"]
+[tiktok url="https://www.tiktok.com/@user/video/1234567890"]
+[facebook url="https://www.facebook.com/user/posts/1234567890"]
 ```
 
 ## Requirements
 
-- Ruby + Rails (as required by CamaleonCMS)
-- [CamaleonCMS](https://github.com/owen2345/camaleon-cms) `~> 2.0`
+- Ruby `>= 3.2`
+- [CamaleonCMS](https://github.com/owen2345/camaleon-cms) `~> 2.9.4` (tested with Rails 7.1 – 8.1)
+
+CamaleonCMS 2.9.x parses several of its own JSON configs in a comment-tolerant
+way that only works on the `json` 2.x line. If your bundle resolves `json` 3,
+pin it in your application's Gemfile:
+
+```ruby
+gem 'json', '< 3'
+```
+
+If Bundler then complains that a newer `json` was "already activated" during
+boot, activate the pin before Bundler in `config/boot.rb`:
+
+```ruby
+gem 'json', '< 3'
+require 'bundler/setup' if File.exist?(ENV['BUNDLE_GEMFILE'])
+```
 
 ## Installation
 
@@ -79,23 +95,30 @@ gem 'social_shortcode', git: 'https://github.com/victorahm/social_shortcode.git'
 Insert a shortcode anywhere in the content of a page or post (the classic editor and
 the HTML editor both work). On save/render the shortcode is replaced by the embed
 markup. Shortcodes are registered through CamaleonCMS' `shortcode_add` API when the
-plugin loads.
+plugin loads, and their names are declared to CamaleonCMS' boot-time
+`ShortcodeRegistry` so the CMS recognizes them at save time.
 
 Example:
 
 ```html
 <p>Watch this video:</p>
-{youtube video="https://youtu.be/dQw4w9WgXcQ" fullwidth="true"}
+[youtube video="https://youtu.be/dQw4w9WgXcQ" fullwidth="true"]
 ```
+
+> **Note for editors:** since CamaleonCMS 2.9.4, saving content that contains a
+> registered shortcode requires the `content_shortcodes` manager permission (or an
+> administrator account). Non-admin authors without that permission are refused
+> when saving a post whose content includes a shortcode.
 
 ## Development
 
-The repo ships with a dummy Rails application under `test/dummy` for local
-development and tests.
+The repo ships with a minimal dummy Rails application under `test/dummy` for local
+development and tests (CamaleonCMS 2.9.x on Rails 8.1).
 
 ```bash
 bundle install
-rake test          # run the Minitest suite
+rake test          # run the Minitest suite against the dummy app
+bin/smoke_test     # install the plugin into a fresh CamaleonCMS app and render a shortcode
 ```
 
 Plugin layout:
@@ -119,7 +142,6 @@ See [AGENTS.md](AGENTS.md) for guidance aimed at AI agents working on this codeb
 Track progress and report problems in the project's issue tracker:
 https://redmine.obsidianasystems.com/projects/social-shortcodes
 
-- Update the plugin to the latest CamaleonCMS version
 - Update the YouTube shortcode to follow YouTube's current embed documentation
 - Add Instagram, X (Twitter), TikTok and Facebook shortcodes
 
