@@ -32,6 +32,7 @@ module Plugins::SocialShortcode::MainHelper
     register_instagram_shortcode
     register_x_shortcode
     register_tiktok_shortcode
+    register_facebook_shortcode
   end
 
   private
@@ -128,6 +129,34 @@ module Plugins::SocialShortcode::MainHelper
                    "Insert TikTok video"
   end
 
+  def register_facebook_shortcode
+    shortcode_add "facebook",
+                   lambda{ |attrs, args|
+                     url = attrs['url'].to_s.strip
+                     unless facebook_share_url?(url)
+                       return args[:shortcode].to_s if url.blank? || !url.match?(%r{\Ahttps?://}i)
+                       safe_url = ERB::Util.html_escape(url)
+                       return "<a href='#{safe_url}'>#{safe_url}</a>"
+                     end
+
+                     href = ERB::Util.url_encode(url)
+                     allow = "allow='autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share'"
+                     if facebook_video_url?(url)
+                       ratio = url.match?(%r{/reel/}i) ? '9/16' : '16/9'
+                       src = "https://www.facebook.com/plugins/video.php?href=#{href}&amp;show_text=false&amp;width=560"
+                       "<iframe width='560' height='315' src='#{src}' " \
+                       "style='border:none;overflow:hidden;width:560px;max-width:100%;height:auto;aspect-ratio:#{ratio}' " \
+                       "frameborder='0' scrolling='no' loading='lazy' #{allow} allowfullscreen></iframe>"
+                     else
+                       src = "https://www.facebook.com/plugins/post.php?href=#{href}&amp;show_text=true&amp;width=500"
+                       "<iframe width='500' height='700' src='#{src}' " \
+                       "style='border:none;overflow:hidden;width:500px;max-width:100%' " \
+                       "frameborder='0' scrolling='no' loading='lazy' #{allow} allowfullscreen></iframe>"
+                     end
+                    },
+                   "Insert Facebook post or reel"
+  end
+
   def youtube_video_id(value)
     raw = value.to_s.strip
 
@@ -154,5 +183,27 @@ module Plugins::SocialShortcode::MainHelper
   def tiktok_video_id(value)
     md = value.match(%r{\A(?:https?:)?//?(?:www\.|m\.)?tiktok\.com/@[^/]+/video/(?<id>\d+)(?:[/?#].*)?\z}i)
     md && md[:id]
+  end
+
+  def facebook_share_url?(value)
+    md = facebook_url_parts(value)
+    return false unless md
+
+    segments = md[:path].split('/').reject(&:empty?)
+    return true if segments.size >= 2
+
+    md[:query].to_s.match?(/(?:\A|&)(?:story_fbid|fbid|v)=/)
+  end
+
+  def facebook_video_url?(value)
+    md = facebook_url_parts(value)
+    return false unless md
+
+    return true if "/#{md[:path]}".match?(%r{/(?:reel|videos?|watch|live|v)/}i)
+    md[:query].to_s.match?(/(?:\A|&)v=/)
+  end
+
+  def facebook_url_parts(value)
+    value.match(%r{\A(?:https?:)?//?(?:www\.|m\.|web\.)?facebook\.com/(?<path>[^?#]*)(?:\?(?<query>[^#]*))?}i)
   end
 end

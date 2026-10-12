@@ -43,6 +43,69 @@ class SocialShortcodeTest < ActiveSupport::TestCase
     assert_includes CamaleonCms::ShortcodeRegistry.names, 'tiktok'
   end
 
+  test 'engine declares the facebook shortcode to the boot-time ShortcodeRegistry' do
+    assert_includes CamaleonCms::ShortcodeRegistry.names, 'facebook'
+  end
+
+  test 'renders a facebook post iframe for a post url' do
+    html = render('[facebook url="https://www.facebook.com/some_page/posts/1234567890"]')
+
+    assert_includes html, 'https://www.facebook.com/plugins/post.php?href='
+    assert_includes html, ERB::Util.url_encode('https://www.facebook.com/some_page/posts/1234567890')
+    assert_includes html, "width='500'"
+    assert_includes html, 'frameborder'
+  end
+
+  test 'renders a facebook post iframe for a permalink url' do
+    url = 'https://www.facebook.com/permalink.php?story_fbid=1234567890&id=999'
+    html = render("[facebook url=\"#{url}\"]")
+
+    assert_includes html, 'https://www.facebook.com/plugins/post.php?href='
+    assert_includes html, ERB::Util.url_encode(url)
+  end
+
+  test 'renders a facebook video iframe for a reel url' do
+    html = render('[facebook url="https://www.facebook.com/reel/1234567890"]')
+
+    assert_includes html, 'https://www.facebook.com/plugins/video.php?href='
+    assert_includes html, ERB::Util.url_encode('https://www.facebook.com/reel/1234567890')
+    assert_includes html, 'aspect-ratio:9/16'
+  end
+
+  test 'renders a facebook video iframe for a videos url' do
+    html = render('[facebook url="https://www.facebook.com/some_page/videos/1234567890"]')
+
+    assert_includes html, 'https://www.facebook.com/plugins/video.php?href='
+    assert_includes html, 'aspect-ratio:16/9'
+  end
+
+  test 'renders a facebook video iframe for a watch url' do
+    html = render('[facebook url="https://www.facebook.com/watch/?v=1234567890"]')
+
+    assert_includes html, 'https://www.facebook.com/plugins/video.php?href='
+  end
+
+  test 'facebook profile url falls back to a plain link without raising' do
+    html = render('[facebook url="https://www.facebook.com/some_page"]')
+
+    assert_equal "<a href='https://www.facebook.com/some_page'>https://www.facebook.com/some_page</a>", html
+  end
+
+  test 'non facebook http url falls back to a plain link without raising' do
+    html = render('[facebook url="https://example.com/not-facebook"]')
+
+    assert_equal "<a href='https://example.com/not-facebook'>https://example.com/not-facebook</a>", html
+  end
+
+  test 'non http facebook url falls back to the original shortcode without raising' do
+    assert_equal '[facebook url="javascript:alert(1)"]',
+                 render('[facebook url="javascript:alert(1)"]')
+  end
+
+  test 'missing facebook url attribute keeps the original shortcode without raising' do
+    assert_equal '[facebook]', render('[facebook]')
+  end
+
   test 'renders a tiktok blockquote embed for a video url' do
     html = render('[tiktok url="https://www.tiktok.com/@scout2015/video/6718335390845095173"]')
 
