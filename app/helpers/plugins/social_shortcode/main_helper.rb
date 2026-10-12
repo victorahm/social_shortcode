@@ -30,6 +30,7 @@ module Plugins::SocialShortcode::MainHelper
   def create_social_shortcodes
     register_youtube_shortcode
     register_instagram_shortcode
+    register_x_shortcode
   end
 
   private
@@ -87,6 +88,25 @@ module Plugins::SocialShortcode::MainHelper
                    "Insert instagram post"
   end
 
+  def register_x_shortcode
+    shortcode_add "x",
+                   lambda{ |attrs, args|
+                     url = attrs['url'].to_s.strip
+                     unless x_status_url?(url)
+                       return args[:shortcode].to_s if url.blank? || !url.match?(%r{\Ahttps?://}i)
+                       safe_url = ERB::Util.html_escape(url)
+                       return "<a href='#{safe_url}'>#{safe_url}</a>"
+                     end
+
+                     safe_url = ERB::Util.html_escape(url)
+                     theme = attrs['theme'].to_s.casecmp('dark').zero? ? 'dark' : 'light'
+                     "<blockquote class='twitter-tweet' data-theme='#{theme}'>" \
+                     "<a href='#{safe_url}'>View this post on X</a></blockquote>" \
+                     "<script async src='https://platform.twitter.com/widgets.js' charset='utf-8'></script>"
+                    },
+                   "Insert X (Twitter) post"
+  end
+
   def youtube_video_id(value)
     raw = value.to_s.strip
 
@@ -104,5 +124,9 @@ module Plugins::SocialShortcode::MainHelper
 
   def instagram_media_url?(value)
     value.match?(%r{\A(?:https?:)?//?(?:www\.)?instagram\.com/(?:p|reel|tv)/[A-Za-z0-9_-]+(?:[/?#].*)?\z}i)
+  end
+
+  def x_status_url?(value)
+    value.match?(%r{\A(?:https?:)?//?(?:www\.|mobile\.)?(?:x|twitter)\.com/[^/]+/status/\d+(?:\?.*)?\z}i)
   end
 end
