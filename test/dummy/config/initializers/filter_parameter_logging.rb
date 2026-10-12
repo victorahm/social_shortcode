@@ -1,4 +1,4 @@
 # Be sure to restart your server when you modify this file.
 
-# Configure sensitive parameters which will be filtered from the log file.
-Rails.application.config.filter_parameters += [:password]
+# Add additional parameters to be filtered from the log file.
+Rails.application.config.filter_parameters += %i[passw email_pass secret access_key token]

@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Smoke test (Redmine #1089): install this plugin into a FRESH CamaleonCMS app
+# and verify the [youtube] shortcode end-to-end:
+#
+#   1. CamaleonCMS + plugin boot together (gem mode discovery)
+#   2. the plugin's shortcode is declared to CamaleonCMS' boot-time ShortcodeRegistry
+#   3. a site is provisioned and the plugin is activated
+#   4. the save-time content gate accepts admin saves and refuses untrusted saves
+#   5. the frontend renders the shortcode as an embed iframe
+#
+# Usage:
+#   bin/smoke_test
+#
+# Env:
+#   SMOKE_DIR   directory for the throwaway app (default: a fresh mktemp -d)
+#   SMOKE_KEEP  set to 1 to keep the throwaway app for inspection
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SMOKE_DIR="${SMOKE_DIR:-$(mktemp -d /tmp/social_shortcode_smoke.XXXXXX)}"
+APP="$SMOKE_DIR/smoke_app"
+
+cleanup() {
+  if [ "${SMOKE_KEEP:-0}" != "1" ]; then
+    rm -rf "$SMOKE_DIR"
+  else
+    echo "==> Keeping $SMOKE_DIR (SMOKE_KEEP=1)"
+  fi
+}
+trap cleanup EXIT
+
+echo "==> [1/6] Creating a fresh Rails app in $APP"
+# rails new must not run inside the plugin directory; resolve the rails CLI via
+# this repo's bundle instead (BUNDLE_GEMFILE is absolute, so cwd does not matter).
+cd "$SMOKE_DIR"
+BUNDLE_GEMFILE="$REPO_ROOT/Gemfile" bundle exec rails new "$APP" \
+  --skip-git --skip-bundle --skip-kamal --skip-solid --skip-thruster --skip-docker \
+  --skip-brakeman --skip-rubocop --skip-ci --skip-listen \
+  --skip-action-mailbox --skip-action-text --skip-active-storage --skip-action-cable \
+  --skip-hotwire --skip-jbuilder --skip-javascript --skip-system-test --skip-bootsnap
+
+# bundle exec exports BUNDLE_GEMFILE; drop it so the fresh app uses its own.
+unset BUNDLE_GEMFILE
+cd "$APP"
+
+echo "==> [2/6] Preparing the Gemfile (sprockets pipeline + CamaleonCMS + plugin)"
+# CamaleonCMS is a sprockets-based CMS: fresh Rails apps default to propshaft,
+# whose Gemfile entry must be swapped before the first boot. The sprockets
+# railtie also refuses to boot without app/assets/config/manifest.js, so create
+# it up front (camaleon_cms:install appends its own links to it afterwards).
+sed -i '/gem "propshaft"/d' Gemfile
+cat >> Gemfile <<EOF
+
+# --- social_shortcode smoke test ---
+gem 'sprockets'
+gem 'sprockets-rails'
+gem 'camaleon_cms', '~> 2.9.4'
+gem 'social_shortcode', path: '$REPO_ROOT'
+# camaleon_cms 2.9.x is not compatible with json 3 (see the plugin README)
+gem 'json', '< 3'
+EOF
+
+mkdir -p app/assets/config
+cat > app/assets/config/manifest.js <<'MANIFEST'
+//= link_tree ../images
+MANIFEST
+
+# camaleon_cms:install appends `require_relative './lib/plugin_routes'` (which
+# requires json) to the app Gemfile. That line executes while Bundler is still
+# setting up, so without an early activation RubyGems resolves the newest json
+# (3.x) and Bundler aborts on the Gemfile's `json < 3` pin. Activate first.
+cat > config/boot.rb <<'BOOT'
+# Set up gems listed in the Gemfile.
+ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
+
+gem "json", "< 3"
+require "bundler/setup" if File.exist?(ENV["BUNDLE_GEMFILE"])
+BOOT
+
+echo "==> [3/6] bundle install"
+bundle install
+
+echo "==> [4/6] Installing CamaleonCMS and migrating the database"
+# Route every command through the app's bin/rails (bin stubs set up Bundler
+# first, so the json pin resolves cleanly; `bundle exec rake` on PATH does not).
+bin/rails generate camaleon_cms:install
+bin/rails camaleon_cms:generate_migrations
+bin/rails db:migrate
+
+echo "==> [5/6] Running end-to-end checks"
+bin/rails runner - <<'RUBY'
+def ok(cond, msg)
+  raise "SMOKE FAIL: #{msg}" unless cond
+  puts "  ok: #{msg}"
+end
+
+# 1. The plugin's engine declared the shortcode at boot.
+ok CamaleonCms::ShortcodeRegistry.names.include?('youtube'),
+   'youtube declared to CamaleonCms::ShortcodeRegistry'
+
+# 2. The gem plugin is discovered in gem mode.
+info = PluginRoutes.plugin_info('social_shortcode')
+ok info.present? && info['gem_mode'], 'plugin discovered in gem mode'
+ok info['hooks']['app_before_load'] == ['create_social_shortcodes'],
+   'manifest wires create_social_shortcodes to app_before_load'
+
+# 3. Provision a site the same way CamaleonCMS' own specs do: a host object
+#    extended with the CMS helpers, with every plugin helper pre-extended so
+#    on_active hooks of the default plugins resolve during installation.
+host = Object.new
+host.extend(CamaleonCms::SiteHelper)
+host.extend(CamaleonCms::HooksHelper)
+PluginRoutes.all_apps.each do |app|
+  (app['helpers'] || []).each do |mod|
+    begin
+      host.extend(mod.constantize)
+    rescue StandardError
+      nil
+    end
+  end
+end
+
+# slug under the ".test" suffix so Rails' default dev host authorization allows it
+site = CamaleonCms::Site.create!(name: 'Smoke Test', slug: 'smoke.test',
+                                 description: 'social_shortcode smoke test')
+CurrentRequest.site = site.decorate
+host.site_after_install(site, 'default')
+ok site.get_theme_slug == 'default', 'site provisioned with the default theme'
+
+# 4. Activate the plugin (required for its app_before_load hook to run).
+plugin = site.plugins.where(slug: 'social_shortcode').first_or_create!
+ok plugin.active, 'plugin activated for the site'
+
+# 5. Save-time content gate: with the shortcode registered, an untrusted save
+#    must be refused and an admin save must succeed.
+admin = site.users.where(role: 'admin').first
+ok admin.present?, 'admin user exists'
+post_type = site.post_types.find_by(slug: 'post') || site.post_types.first
+ok post_type.present?, 'post type available'
+
+content = '<p>Watch:</p>[youtube video="https://www.youtube.com/watch?v=dQw4w9WgXcQ"]'
+CurrentRequest.user = nil
+begin
+  post_type.posts.create!(title: 'Should be refused', slug: 'smoke-refused', content: content)
+  raise 'SMOKE FAIL: gate accepted a shortcode save without a trusted user'
+rescue ActiveRecord::RecordInvalid
+  puts '  ok: save-time gate refuses untrusted saves containing the shortcode'
+end
+
+CurrentRequest.user = admin
+post = post_type.posts.create!(title: 'Smoke YouTube', slug: 'smoke-youtube',
+                               content: content, status: 'published')
+ok post.persisted?, 'admin save with the shortcode succeeded'
+
+# 6. Frontend render: the app_before_load hook registers the shortcode for the
+#    request and the_content expands it through do_shortcode.
+session = ActionDispatch::Integration::Session.new(Rails.application)
+session.host!('smoke.test')
+path = post.decorate.the_url(as_path: true)
+session.get path
+unless session.response.successful?
+  puts "  diagnostic: status=#{session.response.status}"
+  puts "  diagnostic: config.hosts=#{Rails.application.config.hosts.inspect}"
+  puts "  diagnostic: body=#{session.response.body[0, 600].inspect}"
+end
+ok session.response.successful?, "GET #{path} => #{session.response.status}"
+ok session.response.body.include?('youtube.com/embed/dQw4w9WgXcQ'),
+   'frontend response contains the YouTube iframe'
+puts "  rendered: GET #{path}"
+RUBY
+
+echo "==> [6/6] SMOKE TEST PASSED"
