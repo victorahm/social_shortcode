@@ -6,6 +6,10 @@ module SocialShortcode
     # the "app_before_load" hook in the plugin manifest.
     initializer "social_shortcode.register_shortcodes" do
       CamaleonCms::ShortcodeRegistry.register("youtube")
+      CamaleonCms::ShortcodeRegistry.register("instagram")
+      CamaleonCms::ShortcodeRegistry.register("x")
+      CamaleonCms::ShortcodeRegistry.register("tiktok")
+      CamaleonCms::ShortcodeRegistry.register("facebook")
     end
   end
 end

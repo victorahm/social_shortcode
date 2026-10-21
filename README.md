@@ -15,35 +15,92 @@ responsive embed in the frontend. No copy/paste of raw iframe HTML, no broken ma
 | Shortcode | Status | Description |
 |-----------|--------|-------------|
 | `[youtube]` | ✅ Available | Embeds a YouTube video (full URL, `youtu.be` link or video ID). |
-| `[instagram]` | 🔜 Planned | Embeds an Instagram post. |
-| `[x]` | 🔜 Planned | Embeds an X (Twitter) post/tweet. |
-| `[tiktok]` | 🔜 Planned | Embeds a TikTok video. |
-| `[facebook]` | 🔜 Planned | Embeds a Facebook post or reel. |
+| `[instagram]` | ✅ Available | Embeds an Instagram post, reel or video. |
+| `[x]` | ✅ Available | Embeds an X (Twitter) post/tweet. |
+| `[tiktok]` | ✅ Available | Embeds a TikTok video. |
+| `[facebook]` | ✅ Available | Embeds a Facebook post or reel. |
 
 ### YouTube
 
 ```
 [youtube video="https://www.youtube.com/watch?v=dQw4w9WgXcQ"]
 [youtube video="https://youtu.be/dQw4w9WgXcQ" fullwidth="true"]
+[youtube video="https://www.youtube.com/shorts/dQw4w9WgXcQ"]
 [youtube video="dQw4w9WgXcQ" autoplay="true"]
 ```
 
+The video renders in YouTube's current
+[`https://www.youtube.com/embed/VIDEO_ID`](https://developers.google.com/youtube/player_parameters)
+player format with the `rel=0` and `playsinline=1` parameters (and `autoplay=1`
+when requested).
+
 | Attribute | Default | Description |
 |-----------|---------|-------------|
-| `video` | — | **Required.** Full YouTube URL, `youtu.be` URL or bare video ID. |
-| `fullwidth` | `false` | When `true`, wraps the embed in a responsive 16:9 container. |
+| `video` | — | **Required.** Full YouTube URL (`watch`, `shorts`, `embed`), `youtu.be` URL or bare 11-character video ID. |
+| `fullwidth` | `false` | When `true`, wraps the embed in a responsive 16:9 container (`aspect-ratio`, 100% width). |
 | `autoplay` | `false` | When `true`, adds `autoplay=1` to the embed URL. |
 
-### Coming soon
-
-These shortcodes are planned and tracked as issues:
+### Instagram
 
 ```
-[instagram url="https://www.instagram.com/p/XXXXXXXXXXX/"]
-[x url="https://x.com/user/status/1234567890"]
-[tiktok url="https://www.tiktok.com/@user/video/1234567890"]
-[facebook url="https://www.facebook.com/user/posts/1234567890"]
+[instagram url="https://www.instagram.com/p/C8XYZabc123/"]
+[instagram url="https://www.instagram.com/reel/C8XYZabc123/"]
 ```
+
+The post renders with Instagram's official embed (blockquote + `embed.js`). Posts,
+reels and IGTV videos (`/p/`, `/reel/`, `/tv/` URLs) are supported.
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `url` | — | **Required.** Instagram post, reel or TV URL. Any other URL falls back to a plain link. |
+
+### X (Twitter)
+
+```
+[x url="https://x.com/jack/status/20"]
+[x url="https://twitter.com/jack/status/20" theme="dark"]
+```
+
+The tweet renders with X's official embed (blockquote `twitter-tweet` +
+`widgets.js`). Both `x.com` and `twitter.com` status URLs are accepted.
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `url` | — | **Required.** X/Twitter status URL (`…/user/status/123456`). Any other URL falls back to a plain link. |
+| `theme` | `light` | Set to `dark` to render the embed with the dark theme. |
+
+### TikTok
+
+```
+[tiktok url="https://www.tiktok.com/@scout2015/video/6718335390845095173"]
+```
+
+The video renders with the official TikTok embed markup (blockquote
+`tiktok-embed` + `embed.js`) — the same HTML TikTok's oEmbed endpoint returns,
+emitted directly so no network request happens at render time. Short links
+(`vm.tiktok.com/…`) cannot be resolved server-side and fall back to a plain
+link.
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `url` | — | **Required.** TikTok video URL (`…/@user/video/123456`). Any other URL falls back to a plain link. |
+
+### Facebook
+
+```
+[facebook url="https://www.facebook.com/some_page/posts/1234567890"]
+[facebook url="https://www.facebook.com/reel/1234567890"]
+[facebook url="https://www.facebook.com/permalink.php?story_fbid=1234567890&id=999"]
+```
+
+Posts render with the official `plugins/post.php` embed iframe; reels and
+videos (`/reel/`, `/videos/`, `/watch/` URLs) render with `plugins/video.php`
+(reels use a 9:16 portrait frame, videos 16:9). Profile/page URLs without a
+post fall back to a plain link.
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `url` | — | **Required.** Facebook post, reel, video or permalink URL. Any other URL falls back to a plain link. |
 
 ## Requirements
 
@@ -141,9 +198,6 @@ See [AGENTS.md](AGENTS.md) for guidance aimed at AI agents working on this codeb
 
 Track progress and report problems in the project's issue tracker:
 https://redmine.obsidianasystems.com/projects/social-shortcodes
-
-- Update the YouTube shortcode to follow YouTube's current embed documentation
-- Add Instagram, X (Twitter), TikTok and Facebook shortcodes
 
 ## Contributing
 
